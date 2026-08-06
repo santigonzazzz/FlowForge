@@ -1,79 +1,240 @@
-# AI Workflow Orchestrator
+# FlowForge
 
-An open-source workflow automation engine inspired by Zapier and Make, featuring native AI integrations. The system allows developers to string together event-driven tasks, process conditional logic, and execute Large Language Model (LLM) operations without writing new Python code. It is designed around an asynchronous event-driven architecture.
+### AI-Powered Workflow Automation Engine
 
----
+FlowForge is an open-source workflow automation platform inspired by tools like Zapier and Make. It enables developers to build event-driven workflows, execute conditional logic, and integrate Large Language Models (LLMs) into automation pipelines through a modular asynchronous architecture.
 
-## 🚀 Key Features
-
-*   **Workflow Engine**: Define sequential or branching automation tasks dynamically via clean JSON structures.
-*   **Webhook Triggers**: Fire workflows instantly through external incoming HTTP payloads.
-*   **Embedded AI Nodes**: Natively interact with LLMs directly within workflows (Powered by Groq):
-    *   `ai_classify`: Route logic dynamically based on semantic content.
-    *   `ai_generate`: Autonomously write context-aware outputs or responses.
-*   **Asynchronous Workers**: Uses Redis queues to push tasks to background workers, improving API responsiveness.
-*   **Retry Mechanism**: Built-in fault tolerance logic that catches failures, delays execution, and safely re-queues them.
-*   **Conditional Branching**: Programmable `if/else` steps evaluating dynamic variables injected at runtime.
-*   **Execution Logging**: Stores step results, errors, and JSON inputs/outputs durably in the database.
+The project focuses on workflow orchestration, scalable backend design, asynchronous task processing, and practical AI integration using modern web technologies.
 
 ---
 
-## 🏗️ Architecture Overview
+# 📸 Preview
 
-The system is built using the following stack:
+> **Project Screenshot / GIF Here**
 
-1.  **Backend (FastAPI)**: The main API service handling routing, validation, and webhook ingestion.
-2.  **Worker Process (Python/AsyncIO)**: A concurrent daemon that polls the Redis queue to execute workflow steps.
-3.  **Frontend (React)**: A Vite + TypeScript dashboard to create workflows and visualize execution history.
-4.  **Message Broker (Redis)**: Enables task queuing between the API and the background workers.
-5.  **Database (PostgreSQL)**: Persistent storage for workflow definitions and historical execution states.
+<!--
+Add a dashboard screenshot or an animated GIF showing:
+- Creating a workflow
+- Executing it
+- Viewing the execution logs
+-->
 
 ---
 
-## 📂 Project Structure
+# 🚀 Tech Stack
 
-This monorepo is structured as follows:
+### Backend
+- Python
+- FastAPI
+- PostgreSQL
+- Redis
+
+### Frontend
+- React
+- TypeScript
+- Vite
+
+### AI
+- Groq API
+- Large Language Models (LLMs)
+
+### DevOps
+- Docker
+- Git
+- GitHub Actions
+
+---
+
+# 💡 Why I Built This
+
+Modern automation platforms provide powerful workflow engines, but very few demonstrate how these systems work internally.
+
+The goal of FlowForge was to explore how an automation platform can be built from scratch using asynchronous processing, distributed components and native AI integration.
+
+Rather than creating simple API wrappers, this project focuses on workflow execution, task orchestration and scalable backend architecture.
+
+---
+
+# ✨ Key Features
+
+- Dynamic workflow execution through configurable JSON definitions.
+- Event-driven architecture with asynchronous background workers.
+- Native AI nodes powered by Groq.
+- Conditional workflow branching.
+- Automatic retry mechanism for failed tasks.
+- Redis-based task queue.
+- Persistent execution history stored in PostgreSQL.
+- Webhook triggers for external integrations.
+
+---
+
+# 🧠 AI Capabilities
+
+FlowForge includes native AI nodes that can be embedded directly into workflow definitions.
+
+Available AI operations include:
+
+- **ai_classify**
+  - Categorize text using semantic understanding.
+
+- **ai_generate**
+  - Generate context-aware content using Large Language Models.
+
+These nodes allow AI to become part of the workflow itself instead of existing as isolated API calls.
+
+---
+
+# 🏗️ Architecture
+
+The system follows a decoupled architecture composed of independent services.
+
+```
+                    Webhook Request
+                          │
+                          ▼
+                 FastAPI REST API
+                          │
+                          ▼
+                    Redis Queue
+                          │
+                          ▼
+                 Background Workers
+                          │
+                          ▼
+              Workflow JSON Engine
+                          │
+                          ▼
+                    PostgreSQL
+```
+
+Main components:
+
+1. **FastAPI**
+   - API Gateway
+   - Validation
+   - Routing
+   - Webhooks
+
+2. **Redis**
+   - Background task queue
+
+3. **Workers**
+   - Execute workflow steps asynchronously
+
+4. **PostgreSQL**
+   - Stores workflows
+   - Stores execution history
+
+5. **React Dashboard**
+   - Workflow management
+   - Execution monitoring
+
+---
+
+# 📂 Project Structure
 
 ```text
 /
-├── backend/    # FastAPI server, database setup, and worker process.
-└── frontend/   # React Single Page Application (UI dashboard).
+├── backend/
+│   ├── app/
+│   ├── workers/
+│   └── requirements.txt
+│
+└── frontend/
+    ├── src/
+    └── package.json
 ```
 
 ---
 
-## ⚙️ How It Works
+# ⚙️ How It Works
 
-When a workflow runs, data travels through a decoupled pipeline:
+When a workflow is triggered, the execution pipeline follows these steps:
 
-`Webhook Call ➡️ API ➡️ Redis Queue ➡️ Background Worker ➡️ JSON Interpreter/Executor ➡️ PostgreSQL`
+```
+Webhook
+    │
+    ▼
+FastAPI API
+    │
+    ▼
+Redis Queue
+    │
+    ▼
+Background Worker
+    │
+    ▼
+Workflow Interpreter
+    │
+    ▼
+PostgreSQL
+```
 
-> Note: Workflows are executed asynchronously to avoid blocking API requests, ensuring fast responses for webhook triggers.
+The API immediately returns a response while the worker continues processing the workflow asynchronously, ensuring low response latency.
 
 ---
 
-## 🧩 Core Concepts
+# 🧩 Core Concepts
 
-*   **Workflow Definition (JSON)**: Workflows are strictly defined as JSON schemas containing step configurations, conditions, and LLM prompts.
-*   **Execution Context**: Variables are propagated through the workflow as a persistent context dictionary. Output from a previous step is injected dynamically (e.g. `{{steps.category}}`) into future steps.
-*   **Step Engine**: The core interpreter pattern iterating through the JSON steps sequentially and routing the execution logic based on conditions.
-*   **Async Processing (Redis workers)**: The API enqueues tasks and returns immediately, while independent worker daemons handle execution.
-*   **Retry Mechanism**: Designed for resilience against third-party API rate limits or network issues, allowing configurable amounts of retries per workflow failure.
+### Workflow Definition
+
+Workflows are represented as JSON documents describing triggers, conditions and execution steps.
 
 ---
 
-## 📝 Example AI Workflow
+### Execution Context
 
-This JSON workflow listens to a webhook, uses AI to classify the user's intent, and generates a polite apology if it detects a complaint:
+Every step shares a mutable execution context.
+
+Outputs generated by previous steps become available to future nodes through template variables such as:
+
+```text
+{{steps.category}}
+```
+
+---
+
+### Step Engine
+
+The execution engine parses every workflow sequentially and evaluates:
+
+- Conditions
+- Variables
+- AI nodes
+- Actions
+
+---
+
+### Background Processing
+
+Heavy operations never block incoming HTTP requests.
+
+Workers execute tasks independently using Redis queues.
+
+---
+
+### Retry Mechanism
+
+Failures caused by external APIs or temporary network issues are automatically retried according to configurable policies.
+
+---
+
+# 📝 Example Workflow
 
 ```json
 {
-  "trigger": { "type": "webhook" },
+  "trigger": {
+    "type": "webhook"
+  },
   "steps": [
     {
       "type": "ai_classify",
       "input": "{{input.user_email_text}}",
-      "labels": ["complaint", "feedback", "praise"],
+      "labels": [
+        "complaint",
+        "feedback",
+        "praise"
+      ],
       "output_key": "category"
     },
     {
@@ -82,15 +243,10 @@ This JSON workflow listens to a webhook, uses AI to classify the user's intent, 
       "then": [
         {
           "type": "ai_generate",
-          "prompt": "Write a highly polite, professional apology handling this: {{input.user_email_text}}",
-          "output_key": "email_response"
+          "prompt": "Write a professional apology for: {{input.user_email_text}}",
+          "output_key": "response"
         }
-      ],
-      "else": []
-    },
-    {
-      "type": "response",
-      "message": "AI Output Processed: {{steps.email_response}}"
+      ]
     }
   ]
 }
@@ -98,55 +254,99 @@ This JSON workflow listens to a webhook, uses AI to classify the user's intent, 
 
 ---
 
-## 🛠️ Getting Started
+# 🛠️ Getting Started
 
-### 1. Configure Secrets
-Create a `.env` file within the `/backend` folder with the following variables:
+## 1. Configure Environment Variables
+
+Create a `.env` file inside the backend directory.
+
 ```env
-GROQ_API_KEY="your_groq_api_key"
-REDIS_URL="redis://localhost:6379"
-DATABASE_URL="postgresql+asyncpg://user:password@localhost/dbname"
+GROQ_API_KEY=your_key
+
+REDIS_URL=redis://localhost:6379
+
+DATABASE_URL=postgresql+asyncpg://user:password@localhost/database
 ```
 
-### 2. Run the Backend
-Open **two terminals** in the `backend/` directory.
+---
 
-Terminal 1 (The API):
+## 2. Start the Backend
+
 ```bash
 cd backend
+
 pip install -r requirements.txt
+
 uvicorn app.main:app --reload
 ```
 
-Terminal 2 (The Workers):
+---
+
+## 3. Start the Workers
+
 ```bash
 cd backend
+
 python -m app.workers.workflow_worker
 ```
 
-### 3. Run the Frontend
-Open **another terminal** inside the UI project:
+---
+
+## 4. Start the Frontend
+
 ```bash
 cd frontend
+
 npm install
+
 npm run dev
 ```
-Navigate to **`http://localhost:5173`** to interact with the dashboard.
+
+Open:
+
+```
+http://localhost:5173
+```
 
 ---
 
-## 💡 Why This Project Matters
+# 🎯 Engineering Highlights
 
-This project demonstrates core backend engineering skills and systems architecture:
-*   **System Design:** Designing a custom execution engine capable of parsing, managing state, and conditionally routing workloads dynamically.
-*   **Asynchronous Processing:** Abstracting heavy computational tasks (like AI inference) away from the HTTP request-response cycle using Redis, guaranteeing fast webhook acknowledgment.
-*   **AI Integration:** Building practical tooling around LLMs rather than just superficial wrappers, embedding AI functional logic within business workflows.
-*   **Separation of Concerns:** Maintaining hard boundaries between the web server, the worker queues, the execution mechanics, and the persistent storage layer.
+This project demonstrates practical software engineering concepts including:
+
+- REST API Design
+- Asynchronous Processing
+- Event-Driven Architecture
+- Workflow Orchestration
+- Background Workers
+- AI Integration
+- Separation of Concerns
+- Distributed System Design
+- Fault Tolerance
+- JSON-based Execution Engines
 
 ---
 
-## 🔮 Future Improvements
+# 🔮 Future Improvements
 
-- Add OAuth/JWT Authentication to secure internal endpoints.
-- Build a visual Node Graph Editor extending the React UI.
-- Introduce `CRON` trigger types.
+The current version focuses on demonstrating the core workflow engine and asynchronous execution model.
+
+Future iterations may include:
+
+- OAuth 2.0 authentication
+- JWT authorization
+- Visual node editor
+- Scheduled (CRON) workflows
+- Docker Compose deployment
+- Plugin system
+- Multi-tenant support
+- Workflow versioning
+- Real-time execution monitoring
+
+---
+
+# 📄 License
+
+This project is intended for educational and portfolio purposes.
+
+Feel free to explore the architecture, learn from the implementation and adapt ideas for your own projects.
