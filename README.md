@@ -10,14 +10,23 @@ The project focuses on workflow orchestration, scalable backend design, asynchro
 
 # 📸 Preview
 
-> **Project Screenshot / GIF Here**
+The frontend includes a portfolio-ready demo workspace with representative data. It does not require PostgreSQL, Redis, or API credentials:
 
-<!--
-Add a dashboard screenshot or an animated GIF showing:
-- Creating a workflow
-- Executing it
-- Viewing the execution logs
--->
+```bash
+cd frontend
+npm install
+npm run dev
+# Open http://localhost:5173/?demo=1
+```
+
+To generate consistent 1440 px screenshots for a portfolio or marketplace listing, keep the dev server running and execute:
+
+```bash
+npx playwright install chromium  # required once per machine
+npm run screenshots
+```
+
+The dashboard and execution-history captures are written to `portfolio/` at the repository root.
 
 ---
 

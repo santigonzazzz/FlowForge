@@ -1,89 +1,18 @@
-/* Estilos globales y paleta rica usando estética de Glassmorphism */
-@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Manrope:wght@400;500;600;700;800&display=swap');
 
 :root {
-  font-family: 'Outfit', system-ui, Avenir, Helvetica, Arial, sans-serif;
-  line-height: 1.5;
-  font-weight: 400;
-
-  color-scheme: dark;
-  color: rgba(255, 255, 255, 0.9);
-  background-color: #0b0f19;
+  font-family: 'Manrope', system-ui, sans-serif;
+  color: #17211d;
+  background: #f4f6f3;
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
 }
 
-body {
-  margin: 0;
-  display: flex;
-  place-items: center;
-  min-width: 320px;
-  min-height: 100vh;
-  justify-content: center;
-  /* Espacio moderno oscuro con iluminación sutil al fondo */
-  background: radial-gradient(circle at 50% 0%, #1e293b 0%, #0b0f19 60%);
-  background-attachment: fixed;
-}
+* { box-sizing: border-box; }
+html, body, #root { min-width: 320px; min-height: 100%; margin: 0; }
+body { min-height: 100vh; background: #f4f6f3; }
+button, input, textarea { font: inherit; }
+button { cursor: pointer; }
+button:disabled { cursor: not-allowed; opacity: .6; }
 
-#root {
-  max-width: 1000px;
-  margin: 0 auto;
-  padding: 2rem;
-  text-align: center;
-  width: 100%;
-}
-
-/* Base de Glassmorphism para los componentes de caja */
-.card {
-  padding: 2.5em;
-  background: rgba(255, 255, 255, 0.03);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
-  border-radius: 20px;
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  box-shadow: 0 16px 40px -10px rgba(0, 0, 0, 0.5);
-  transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-}
-
-.card:hover {
-  transform: translateY(-4px);
-}
-
-/* Gradientes texturizados paramétricos en botones */
-button {
-  border-radius: 10px;
-  border: 1px solid rgba(255,255,255,0.1);
-  padding: 0.9em 1.8em;
-  font-size: 1em;
-  font-weight: 600;
-  font-family: inherit;
-  background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%);
-  color: white;
-  cursor: pointer;
-  transition: all 0.3s ease;
-  box-shadow: 0 4px 15px rgba(139, 92, 246, 0.3);
-}
-
-button:hover {
-  filter: brightness(1.15);
-  box-shadow: 0 8px 25px rgba(139, 92, 246, 0.5);
-  transform: scale(1.02);
-}
-
-button:active {
-  transform: scale(0.98);
-}
-
-/* Tipografía de títulos con gradient clipping nativo */
-h1 {
-  background: linear-gradient(to right, #4facfe 0%, #00f2fe 100%);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  margin-bottom: 0.3em;
-  font-size: 3rem;
-  letter-spacing: -1px;
-}
-
-h3 {
-  font-weight: 400;
-  color: #94a3b8;
-  margin-bottom: 1.5rem;
-}
+::selection { background: #c6f66f; color: #17211d; }
