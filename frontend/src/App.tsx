@@ -18,7 +18,8 @@ function Logo() {
 function App() {
   const [selectedWorkflowId, setSelectedWorkflowId] = useState<string | null>(null);
   const demoParam = new URLSearchParams(window.location.search).get("demo");
-  const demoMode = demoParam === "1" || (import.meta.env.DEV && demoParam !== "0");
+  const hasConfiguredApi = Boolean(import.meta.env.VITE_API_URL);
+  const demoMode = demoParam === "1" || (demoParam !== "0" && !hasConfiguredApi);
 
   return (
     <div className="app-shell">
