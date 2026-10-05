@@ -48,7 +48,7 @@ async def process_job(job_json: str, rc: redis.Redis) -> None:
                 max_retries=max_retries
             )
             
-            is_success = result.status == "success"
+            is_success = result.success
             
             if not is_success:
                 if retry_count < max_retries:

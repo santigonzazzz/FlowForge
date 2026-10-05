@@ -1,142 +1,77 @@
-import { useState, useEffect } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import api from "../api";
 import CreateWorkflowForm from "../components/CreateWorkflowForm";
 
-interface Props {
-  onViewExecutions: (id: string) => void;
-}
+interface Props { onViewExecutions: (id: string) => void; demoMode: boolean; }
+interface Workflow { id: string; name: string; is_active: boolean; definition?: { trigger?: { type?: string }; steps?: unknown[] }; created_at?: string; runs?: number; success?: number; lastRun?: string; color?: string; icon?: string; }
 
-export default function WorkflowsPage({ onViewExecutions }: Props) {
-  const [workflows, setWorkflows] = useState<any[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+const DEMO_WORKFLOWS: Workflow[] = [
+  { id: "demo-support-ai", name: "AI Support Triage", is_active: true, definition:{trigger:{type:"webhook"},steps:[1,2,3,4]}, runs: 2841, success: 98.4, lastRun:"2 min ago", color:"#e9f7d8", icon:"✦" },
+  { id: "demo-lead-enrichment", name: "Lead Enrichment Pipeline", is_active: true, definition:{trigger:{type:"schedule"},steps:[1,2,3]}, runs: 1956, success: 96.7, lastRun:"12 min ago", color:"#e5efff", icon:"↗" },
+  { id: "demo-invoice", name: "Invoice Data Extractor", is_active: true, definition:{trigger:{type:"email"},steps:[1,2,3,4,5]}, runs: 1682, success: 99.1, lastRun:"28 min ago", color:"#f7e9d7", icon:"▤" },
+  { id: "demo-social", name: "Social Content Generator", is_active: false, definition:{trigger:{type:"schedule"},steps:[1,2,3]}, runs: 1363, success: 94.2, lastRun:"3 hours ago", color:"#f2e6f7", icon:"◇" },
+];
+
+const triggerLabel = (value?: string) => ({ webhook:"Webhook", schedule:"Schedule", email:"Email trigger" }[value || ""] || "Manual");
+
+export default function WorkflowsPage({ onViewExecutions, demoMode }: Props) {
+  const [workflows, setWorkflows] = useState<Workflow[]>(demoMode ? DEMO_WORKFLOWS : []);
+  const [loading, setLoading] = useState(!demoMode);
+  const [showForm, setShowForm] = useState(false);
+  const [search, setSearch] = useState("");
   const [executing, setExecuting] = useState<Record<string, boolean>>({});
 
-  const fetchWorkflows = async () => {
+  const fetchWorkflows = useCallback(async () => {
+    if (demoMode) { setWorkflows(DEMO_WORKFLOWS); setLoading(false); return; }
     setLoading(true);
-    setError(null);
-    try {
-      const res = await api.get("/workflows");
-      setWorkflows(res.data);
-    } catch (err: any) {
-      setError(`No se ha podido conectar al servidor: ${err.message}`);
-    } finally {
-      setLoading(false);
-    }
-  };
+    try { const res = await api.get("/workflows"); setWorkflows(res.data); }
+    catch { setWorkflows([]); }
+    finally { setLoading(false); }
+  }, [demoMode]);
 
-  const handleExecute = async (id: string) => {
-    setExecuting(prev => ({ ...prev, [id]: true }));
-    try {
-      // POST directo para ejecución manual sincrónica
-      const res = await api.post(`/workflows/${id}/execute`);
-      const data = res.data;
-      
-      const isSuccess = data.success === true;
-      const errorMsg = data.results?.find((r: any) => r.error)?.error || "Fallo en ejecución interna";
-      
-      const details = isSuccess 
-        ? `✅ ÉXITO\n\nPasos ejecutados: ${data.steps_executed}/${data.steps_total}\nRespuesta Final: ${JSON.stringify(data.response, null, 2)}`
-        : `❌ FALLÓ\n\nMotivo: ${errorMsg}`;
-        
-      alert(`Resultados del Ejecutor:\n\n${details}`);
-    } catch (err: any) {
-      alert(`Error crítico de Red / API:\n${err.response?.data?.detail || err.message}`);
-    } finally {
-      setExecuting(prev => ({ ...prev, [id]: false }));
-    }
-  };
+  useEffect(() => { fetchWorkflows(); }, [fetchWorkflows]);
+  const filtered = useMemo(() => workflows.filter(w => w.name.toLowerCase().includes(search.toLowerCase())), [workflows, search]);
 
-  useEffect(() => {
-    fetchWorkflows();
-  }, []);
+  const handleExecute = async (workflow: Workflow) => {
+    setExecuting(prev => ({...prev,[workflow.id]:true}));
+    if (!demoMode) { try { await api.post(`/workflows/${workflow.id}/execute`); } catch { /* API feedback belongs in execution history. */ } }
+    window.setTimeout(() => setExecuting(prev => ({...prev,[workflow.id]:false})), 650);
+  };
 
   return (
-    <div className="card" style={{ maxWidth: "800px", margin: "0 auto" }}>
-      <h1>Workflows</h1>
-      <h3>Directorio de automatizaciones</h3>
-
-      <CreateWorkflowForm onCreated={fetchWorkflows} />
-
-      {error && (
-        <div style={{ 
-          marginBottom: "2rem", 
-          color: "#fb7185", 
-          background: "rgba(251, 113, 133, 0.1)", 
-          padding: "1rem", 
-          borderRadius: "10px",
-          border: "1px solid rgba(251, 113, 133, 0.2)"
-        }}>
-          {error}
-        </div>
-      )}
-
-      <div style={{ textAlign: "left", marginBottom: "2rem", minHeight: "200px" }}>
-        {loading ? (
-          <p style={{ textAlign: "center", color: "#64748b" }}>Cargando información desde FastAPI...</p>
-        ) : workflows.length === 0 && !error ? (
-          <p style={{ textAlign: "center", color: "#64748b" }}>No tienes ningún workflow. Crea uno vía API.</p>
-        ) : (
-          <ul style={{ listStyle: "none", padding: 0, margin: 0 }}>
-            {workflows.map((w: any) => (
-              <li key={w.id} style={{ 
-                padding: "1.2rem 1.5rem", 
-                background: "rgba(255, 255, 255, 0.02)", 
-                marginBottom: "0.8rem", 
-                borderRadius: "12px",
-                border: "1px solid rgba(255, 255, 255, 0.05)",
-                display: "flex",
-                flexDirection: "column",
-                gap: "0.5rem",
-                transition: "background 0.2s"
-              }}>
-                <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                  <strong style={{ color: "#f8fafc", fontSize: "1.25rem" }}>
-                    {w.name}
-                  </strong>
-                  <div style={{ display: "flex", alignItems: "center", gap: "1rem" }}>
-                    {w.is_active ? 
-                      <span style={{ color: "#34d399", fontSize: "0.9rem", fontWeight: 600, letterSpacing: "0.5px" }}>🟢 ACTIVO</span> : 
-                      <span style={{ color: "#64748b", fontSize: "0.9rem", fontWeight: 600, letterSpacing: "0.5px" }}>⭕ INACTIVO</span>
-                    }
-                    <button 
-                      onClick={() => onViewExecutions(w.id)}
-                      style={{ 
-                        padding: "0.5em 1em", 
-                        fontSize: "0.85rem", 
-                        background: "rgba(255,255,255,0.05)",
-                        border: "1px solid rgba(255,255,255,0.1)",
-                        boxShadow: "none"
-                      }}
-                    >
-                      Historial
-                    </button>
-                    <button 
-                      onClick={() => handleExecute(w.id)}
-                      disabled={executing[w.id] || !w.is_active}
-                      style={{ 
-                        padding: "0.5em 1em", 
-                        fontSize: "0.85rem", 
-                        background: executing[w.id] ? "#475569" : "linear-gradient(135deg, #10b981 0%, #059669 100%)",
-                        boxShadow: "none"
-                      }}
-                    >
-                      {executing[w.id] ? "Corriendo..." : "▶ Ejecutar en línea"}
-                    </button>
-                  </div>
-                </div>
-                <div style={{ color: "#94a3b8", fontSize: "0.85rem", fontFamily: "monospace" }}>
-                  ID: {w.id}
-                </div>
-              </li>
-            ))}
-          </ul>
-        )}
+    <section className="page">
+      <div className="page-heading">
+        <div><p className="eyebrow">Automation center</p><h1>Good morning, Santiago.</h1><p>Build, monitor and scale your automated workflows from one place.</p></div>
+        <div className="heading-actions"><button className="btn">⇩ Export</button><button className="btn btn-primary" onClick={() => setShowForm(v => !v)}><b>＋</b> New workflow</button></div>
       </div>
 
-      <button onClick={fetchWorkflows} disabled={loading}>
-        {loading ? "Sincronizando..." : "Refrescar Lista"}
-      </button>
-    </div>
+      <div className="stats-grid">
+        <div className="stat-card"><div className="stat-top"><span>Total workflows</span><i className="stat-icon">⌘</i></div><div className="stat-value"><strong>{workflows.length || 0}</strong><span className="trend neutral">{workflows.filter(w=>w.is_active).length} active</span></div></div>
+        <div className="stat-card"><div className="stat-top"><span>Runs this month</span><i className="stat-icon">↗</i></div><div className="stat-value"><strong>7,842</strong><span className="trend">↑ 12.6%</span></div></div>
+        <div className="stat-card"><div className="stat-top"><span>Success rate</span><i className="stat-icon">✓</i></div><div className="stat-value"><strong>97.6%</strong><span className="trend">↑ 1.4%</span></div></div>
+        <div className="stat-card"><div className="stat-top"><span>Time saved</span><i className="stat-icon">◷</i></div><div className="stat-value"><strong>126h</strong><span className="trend">↑ 18.2%</span></div></div>
+      </div>
+
+      {showForm && <CreateWorkflowForm onCreated={() => { fetchWorkflows(); setShowForm(false); }} />}
+
+      <div className="panel">
+        <div className="panel-toolbar"><div className="panel-title">All workflows <span>{filtered.length} automations</span></div><div className="toolbar-right"><label className="search-box">⌕<input value={search} onChange={e=>setSearch(e.target.value)} placeholder="Search workflows..." /></label><button className="btn btn-small">☷ Filter</button></div></div>
+        {loading ? <div className="loading-state">Syncing workflows with FlowForge API…</div> : filtered.length === 0 ? <div className="empty-state">No workflows found. Create your first automation to get started.</div> : (
+          <table className="workflow-table">
+            <thead><tr><th>Workflow</th><th>Trigger</th><th>Status</th><th>Runs</th><th>Success rate</th><th>Last run</th><th /></tr></thead>
+            <tbody>{filtered.map((w,index)=><tr key={w.id}>
+              <td><div className="workflow-name"><span className="workflow-logo" style={{background:w.color || ["#e9f7d8","#e5efff","#f7e9d7","#f2e6f7"][index%4]}}>{w.icon || "⌁"}</span><div><strong>{w.name}</strong><small>{w.definition?.steps?.length || 1} connected steps</small></div></div></td>
+              <td><span className="trigger"><i className="dot" />{triggerLabel(w.definition?.trigger?.type)}</span></td>
+              <td><span className={w.is_active?"status":"status paused"}>{w.is_active?"Active":"Paused"}</span></td>
+              <td><span className="run-count">{(w.runs || 0).toLocaleString()}</span></td>
+              <td><span className="success-rate"><span className="mini-bar"><i style={{width:`${w.success || 0}%`}} /></span>{w.success ? `${w.success}%` : "—"}</span></td>
+              <td>{w.lastRun || "Not run yet"}</td>
+              <td><div className="row-actions"><button className="action-btn" onClick={()=>onViewExecutions(w.id)}>History</button><button className="action-btn run" disabled={!w.is_active || executing[w.id]} onClick={()=>handleExecute(w)}>{executing[w.id]?"Running…":"▶ Run"}</button></div></td>
+            </tr>)}</tbody>
+          </table>
+        )}
+        <div className="panel-footer"><span>Showing {filtered.length} of {filtered.length} workflows</span><div className="pagination"><button className="page-button">‹</button><button className="page-button active">1</button><button className="page-button">›</button></div></div>
+      </div>
+    </section>
   );
 }

@@ -54,6 +54,9 @@ class WorkflowExecutionResponse(BaseModel):
     status: str
     input_data: dict | None = None
     output_data: dict | None = None
+    retry_count: int = 0
+    max_retries: int = 3
+    error_message: str | None = None
     started_at: datetime
     finished_at: datetime | None = None
 
